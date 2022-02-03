@@ -13,3 +13,11 @@ def task_download_data():
         "targets": ["Melee_data.csv.gz"],
         "uptodate": [run_once],
     }
+
+
+def task_gunzip_data():
+    return {
+        "actions": ["gunzip -c %(dependencies)s > %(targets)s"],
+        "targets": ["Melee_data.csv"],
+        "file_dep": ["Melee_data.csv.gz"],
+    }
