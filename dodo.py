@@ -6,9 +6,6 @@ def task_hello_world():
     return {"actions": ['echo "hello world!" > hello.txt'], "targets": ["hello.txt"]}
 
 
-DATA_URL = "https://s3.amazonaws.com/pydoit-intermediate/Melee_data.csv.gz"
-
-
 def task_download_data():
     DATA_URL = "https://s3.amazonaws.com/pydoit-intermediate/Melee_data.csv.gz"
 
