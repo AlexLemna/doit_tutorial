@@ -1,5 +1,8 @@
+import os
+
 from doit.task import clean_targets
 from doit.tools import run_once
+import jinja2
 
 
 def task_hello_world():
@@ -7,17 +10,23 @@ def task_hello_world():
 
 
 def task_download_data():
-    DATA_URL = "https://s3.amazonaws.com/pydoit-intermediate/Melee_data.csv.gz"
+    DATA_URLS = [
+        "https://s3.amazonaws.com/pydoit-intermediate/Melee_data.csv.document.md.tpl",
+        "https://s3.amazonaws.com/pydoit-intermediate/Melee_data.csv.gz",
+    ]
 
-    def print_url():
-        print("File was retrieved from: {0}".format(DATA_URL))
+    def print_url(URL):
+        print("File was retrieved from: {0}".format(URL))
 
-    return {
-        "actions": ["curl -OL {0}".format(DATA_URL)],
-        "targets": ["Melee_data.csv.gz"],
-        "uptodate": [run_once],
-        "clean": [clean_targets, print_url],
-    }
+    for URL in DATA_URLS:
+        target = os.path.basename(URL)
+        yield {
+            "name": "download:{0}".format(target),
+            "actions": ["curl -OL {0}".format(URL)],
+            "targets": [target],
+            "uptodate": [run_once],
+            "clean": [clean_targets, (print_url, [URL])],
+        }
 
 
 def task_gunzip_data():
@@ -61,4 +70,28 @@ def task_plot_heatmap():
         "file_dep": ["Melee_data.csv"],
         "targets": ["Melee_data.csv.heatmap.pdf"],
         "clean": True,
+    }
+
+
+def task_build_markdown_file():
+    def do_build(targets):
+
+        with open(targets[0] + ".tpl") as fp:
+            template = jinja2.Template(fp.read())
+
+        with open(targets[0], "wb") as fp:
+            fp.write(
+                template.render(
+                    author="Your Name",
+                    affiliation="Your Institution",
+                    date="Jan 20, 2016",
+                    heatmap_filename="Melee_data.csv.heatmap.pdf",
+                )
+            )
+
+    return {
+        "actions": [do_build],
+        "file_dep": ["Melee_data.csv.heatmap.pdf", "Melee_data.csv.document.md.tpl"],
+        "targets": ["Melee_data.csv.document.md"],
+        "clean": [clean_targets],
     }
